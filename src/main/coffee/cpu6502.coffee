@@ -28,8 +28,8 @@ exports.NMI_LO   = NMI_LO   = 0xFFFA
 exports.NMI_HI   = NMI_HI   = 0xFFFB
 exports.RESET_LO = RESET_LO = 0xFFFC
 exports.RESET_HI = RESET_HI = 0xFFFD
-exports.IRQ_LO   = IRQ_LO   = 0xFFFA
-exports.IRQ_HI   = IRQ_HI   = 0xFFFB
+exports.IRQ_LO   = IRQ_LO   = 0xFFFE
+exports.IRQ_HI   = IRQ_HI   = 0xFFFF
 
 class Cpu6502
   constructor: (@mem) ->

@@ -1,1 +1,1 @@
-module.exports = require('./lib/cpu6502');
+module.exports = require('./lib/cpu');

@@ -1,6 +1,19 @@
 # cpu6502
 MOS 6502 in CoffeeScript
 
+## Cpu6502
+Cpu6502 is a component class that provides emulation/simulation of a
+6502 CPU.
+
+    TODO: Documentation here
+
+## MemoryBuilder
+MemoryBuilder is a utility class that uses the
+[builder pattern](https://en.wikipedia.org/wiki/Builder_pattern) to enable
+creation of an arbitary memory configuration.
+
+    TODO: Documentation here
+
 ## LICENSE
 cpu6502<br>
 Copyright 2014 Patrick Meade

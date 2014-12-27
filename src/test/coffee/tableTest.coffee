@@ -33,5 +33,26 @@ describe 'table', ->
         entry.should.be.lessThan 8
         entry.should.be.greaterThan 1
 
+  it 'should be able to generate an _op table', ->
+    opTable = table.generateOpTable()
+    opTable.should.be.ok
+
+  it 'should be able to generate an _op', ->
+    op = table.generateOp 0xA9
+    op.should.be.ok
+
+  it 'should be able to list the operations by mnemonic', ->
+    for mnem in table.MNEM_LIST
+      mnem.should.be.ok
+      #console.log "  _do#{mnem}: =>\n"
+
+  it 'should be able to generate lots of _opNN', ->
+    {CYCLE_TABLE} = table
+    for i in [0..255]
+      if CYCLE_TABLE[i] isnt 0
+        opText = table.generateOp i
+        opText.should.be.ok
+        #console.log opText
+
 #----------------------------------------------------------------------------
 # end of tableTest.coffee

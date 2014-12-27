@@ -64,21 +64,40 @@ ADDR = (address) -> (address & 0xFFFF)
 
 class Cpu6502
   constructor: (@mem) ->
-    @extraCycle = 0
-    @_op = ((-> throw new Error 'BadOpcodeError') for i in [0..255])
-    @_op[0xA9] = =>
-      @_i = @mem.read(@pc, IMMEDIATE)
-      @pc = ADDR @pc + 0x0001
-      @ac = @_i
-      if @ac is 0
-        @sr |= FLAG_ZERO
-      else
-        @sr &= ~FLAG_ZERO
-      if @ac >= 0x80
-        @sr |= FLAG_NEGATIVE
-      else
-        @sr &= ~FLAG_NEGATIVE
-
+    @_op = [ 
+      @_op00, @_op01, @_opXX, @_opXX, @_opXX, @_op05, @_op06, @_opXX,
+      @_op08, @_op09, @_op0A, @_opXX, @_opXX, @_op0D, @_op0E, @_opXX,
+      @_op10, @_op11, @_opXX, @_opXX, @_opXX, @_op15, @_op16, @_opXX,
+      @_op18, @_op19, @_opXX, @_opXX, @_opXX, @_op1D, @_op1E, @_opXX,
+      @_op20, @_op21, @_opXX, @_opXX, @_op24, @_op25, @_op26, @_opXX,
+      @_op28, @_op29, @_op2A, @_opXX, @_op2C, @_op2D, @_op2E, @_opXX,
+      @_op30, @_op31, @_opXX, @_opXX, @_opXX, @_op35, @_op36, @_opXX,
+      @_op38, @_op39, @_opXX, @_opXX, @_opXX, @_op3D, @_op3E, @_opXX,
+      @_op40, @_op41, @_opXX, @_opXX, @_opXX, @_op45, @_op46, @_opXX,
+      @_op48, @_op49, @_op4A, @_opXX, @_op4C, @_op4D, @_op4E, @_opXX,
+      @_op50, @_op51, @_opXX, @_opXX, @_opXX, @_op55, @_op56, @_opXX,
+      @_op58, @_op59, @_opXX, @_opXX, @_opXX, @_op5D, @_op5E, @_opXX,
+      @_op60, @_op61, @_opXX, @_opXX, @_opXX, @_op65, @_op66, @_opXX,
+      @_op68, @_op69, @_op6A, @_opXX, @_op6C, @_op6D, @_op6E, @_opXX,
+      @_op70, @_op71, @_opXX, @_opXX, @_opXX, @_op75, @_op76, @_opXX,
+      @_op78, @_op79, @_opXX, @_opXX, @_opXX, @_op7D, @_op7E, @_opXX,
+      @_opXX, @_op81, @_opXX, @_opXX, @_op84, @_op85, @_op86, @_opXX,
+      @_op88, @_opXX, @_op8A, @_opXX, @_op8C, @_op8D, @_op8E, @_opXX,
+      @_op90, @_op91, @_opXX, @_opXX, @_op94, @_op95, @_op96, @_opXX,
+      @_op98, @_op99, @_op9A, @_opXX, @_opXX, @_op9D, @_opXX, @_opXX,
+      @_opA0, @_opA1, @_opA2, @_opXX, @_opA4, @_opA5, @_opA6, @_opXX,
+      @_opA8, @_opA9, @_opAA, @_opXX, @_opAC, @_opAD, @_opAE, @_opXX,
+      @_opB0, @_opB1, @_opXX, @_opXX, @_opB4, @_opB5, @_opB6, @_opXX,
+      @_opB8, @_opB9, @_opBA, @_opXX, @_opBC, @_opBD, @_opBE, @_opXX,
+      @_opC0, @_opC1, @_opXX, @_opXX, @_opC4, @_opC5, @_opC6, @_opXX,
+      @_opC8, @_opC9, @_opCA, @_opXX, @_opCC, @_opCD, @_opCE, @_opXX,
+      @_opD0, @_opD1, @_opXX, @_opXX, @_opXX, @_opD5, @_opD6, @_opXX,
+      @_opD8, @_opD9, @_opXX, @_opXX, @_opXX, @_opDD, @_opDE, @_opXX,
+      @_opE0, @_opE1, @_opXX, @_opXX, @_opE4, @_opE5, @_opE6, @_opXX,
+      @_opE8, @_opE9, @_opEA, @_opXX, @_opEC, @_opED, @_opEE, @_opXX,
+      @_opF0, @_opF1, @_opXX, @_opXX, @_opXX, @_opF5, @_opF6, @_opXX,
+      @_opF8, @_opF9, @_opXX, @_opXX, @_opXX, @_opFD, @_opFE, @_opXX ]
+    
   reset: ->
     @ac = 0x00
     @sp = 0xFF
@@ -88,10 +107,880 @@ class Cpu6502
     @pc = @mem.read(RESET_LO, VECTOR_LO) | (@mem.read(RESET_HI, VECTOR_HI) << 8)
 
   execute: ->
+    @extraCycle = 0
     opcode = @mem.read(@pc, OPCODE)
     @pc = ADDR @pc + 0x0001
     @_op[opcode]()
     return CYCLE_TABLE[opcode] + @extraCycle
+    
+  #--------------------------------------------------------------------------
+
+  _doADC: => throw new Error 'Not Implemented'
+
+  _doAND: => throw new Error 'Not Implemented'
+
+  _doASL: => throw new Error 'Not Implemented'
+
+  _doBCC: => throw new Error 'Not Implemented'
+
+  _doBCS: => throw new Error 'Not Implemented'
+
+  _doBEQ: => throw new Error 'Not Implemented'
+
+  _doBIT: => throw new Error 'Not Implemented'
+
+  _doBMI: => throw new Error 'Not Implemented'
+
+  _doBNE: => throw new Error 'Not Implemented'
+
+  _doBPL: => throw new Error 'Not Implemented'
+
+  _doBRK: => throw new Error 'Not Implemented'
+
+  _doBVC: => throw new Error 'Not Implemented'
+
+  _doBVS: => throw new Error 'Not Implemented'
+
+  _doCLC: => throw new Error 'Not Implemented'
+
+  _doCLD: => throw new Error 'Not Implemented'
+
+  _doCLI: => throw new Error 'Not Implemented'
+
+  _doCLV: => throw new Error 'Not Implemented'
+
+  _doCMP: => throw new Error 'Not Implemented'
+
+  _doCPX: => throw new Error 'Not Implemented'
+
+  _doCPY: => throw new Error 'Not Implemented'
+
+  _doDEC: => throw new Error 'Not Implemented'
+
+  _doDEX: => throw new Error 'Not Implemented'
+
+  _doDEY: => throw new Error 'Not Implemented'
+
+  _doEOR: => throw new Error 'Not Implemented'
+
+  _doINC: => throw new Error 'Not Implemented'
+
+  _doINX: => throw new Error 'Not Implemented'
+
+  _doINY: => throw new Error 'Not Implemented'
+
+  _doJMP: => throw new Error 'Not Implemented'
+
+  _doJSR: => throw new Error 'Not Implemented'
+
+  _doLDA: =>
+    @ac = @_i
+    @_updateNZ()
+
+  _doLDX: => throw new Error 'Not Implemented'
+
+  _doLDY: => throw new Error 'Not Implemented'
+
+  _doLSR: => throw new Error 'Not Implemented'
+
+  _doORA: => throw new Error 'Not Implemented'
+
+  _doPHA: => throw new Error 'Not Implemented'
+
+  _doPHP: => throw new Error 'Not Implemented'
+
+  _doPLA: => throw new Error 'Not Implemented'
+
+  _doPLP: => throw new Error 'Not Implemented'
+
+  _doROL: => throw new Error 'Not Implemented'
+
+  _doROR: => throw new Error 'Not Implemented'
+
+  _doRTI: => throw new Error 'Not Implemented'
+
+  _doRTS: => throw new Error 'Not Implemented'
+
+  _doSBC: => throw new Error 'Not Implemented'
+
+  _doSEC: => throw new Error 'Not Implemented'
+
+  _doSED: => throw new Error 'Not Implemented'
+
+  _doSEI: => throw new Error 'Not Implemented'
+
+  _doSTA: => throw new Error 'Not Implemented'
+
+  _doSTX: => throw new Error 'Not Implemented'
+
+  _doSTY: => throw new Error 'Not Implemented'
+
+  _doTAX: => throw new Error 'Not Implemented'
+
+  _doTAY: => throw new Error 'Not Implemented'
+
+  _doTSX: => throw new Error 'Not Implemented'
+
+  _doTXA: => throw new Error 'Not Implemented'
+
+  _doTXS: => throw new Error 'Not Implemented'
+
+  _doTYA: => throw new Error 'Not Implemented'
+
+  #--------------------------------------------------------------------------
+  
+  _loadAbsolute: => throw new Error 'Not Implemented'
+  
+  _loadAbsoluteX: => throw new Error 'Not Implemented'
+  
+  _loadAbsoluteY: => throw new Error 'Not Implemented'
+
+  _loadAccumulator: => throw new Error 'Not Implemented'
+
+  _loadImmediate: =>
+    @_i = @mem.read(@pc, IMMEDIATE)
+    @pc = ADDR @pc + 0x0001
+  
+  _loadIndirect: => throw new Error 'Not Implemented'
+
+  _loadIndirectX: => throw new Error 'Not Implemented'
+
+  _loadIndirectY: => throw new Error 'Not Implemented'
+
+  _loadRelative: => throw new Error 'Not Implemented'
+
+  _loadZeroPage: => throw new Error 'Not Implemented'
+
+  _loadZeroPageX: => throw new Error 'Not Implemented'
+
+  _loadZeroPageY: => throw new Error 'Not Implemented'
+
+  #--------------------------------------------------------------------------
+
+  _opXX: ->
+    throw new Error 'BadOpcodeError'
+
+  _op00: =>
+    @_doBRK()
+
+  _op01: =>
+    @_loadIndirectX()
+    @_readMemory()
+    @_doORA()
+
+  _op05: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doORA()
+
+  _op06: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doASL()
+    @_writeMemory()
+
+  _op08: =>
+    @_doPHP()
+
+  _op09: =>
+    @_loadImmediate()
+    @_doORA()
+
+  _op0A: =>
+    @_readAC()
+    @_doASL()
+    @_writeAC()
+
+  _op0D: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doORA()
+
+  _op0E: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doASL()
+    @_writeMemory()
+
+  _op10: =>
+    @_loadRelative()
+    @_doBPL()
+
+  _op11: =>
+    @_loadIndirectY()
+    @_readMemory()
+    @_doORA()
+
+  _op15: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doORA()
+
+  _op16: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doASL()
+    @_writeMemory()
+
+  _op18: =>
+    @_doCLC()
+
+  _op19: =>
+    @_loadAbsoluteY()
+    @_readMemory()
+    @_doORA()
+
+  _op1D: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doORA()
+
+  _op1E: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doASL()
+    @_writeMemory()
+
+  _op20: =>
+    @_loadAbsolute()
+    @_doJSR()
+
+  _op21: =>
+    @_loadIndirectX()
+    @_readMemory()
+    @_doAND()
+
+  _op24: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doBIT()
+
+  _op25: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doAND()
+
+  _op26: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doROL()
+    @_writeMemory()
+
+  _op28: =>
+    @_doPLP()
+
+  _op29: =>
+    @_loadImmediate()
+    @_doAND()
+
+  _op2A: =>
+    @_readAC()
+    @_doROL()
+    @_writeAC()
+
+  _op2C: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doBIT()
+
+  _op2D: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doAND()
+
+  _op2E: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doROL()
+    @_writeMemory()
+
+  _op30: =>
+    @_loadRelative()
+    @_doBMI()
+
+  _op31: =>
+    @_loadIndirectY()
+    @_readMemory()
+    @_doAND()
+
+  _op35: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doAND()
+
+  _op36: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doROL()
+    @_writeMemory()
+
+  _op38: =>
+    @_doSEC()
+
+  _op39: =>
+    @_loadAbsoluteY()
+    @_readMemory()
+    @_doAND()
+
+  _op3D: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doAND()
+
+  _op3E: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doROL()
+    @_writeMemory()
+
+  _op40: =>
+    @_doRTI()
+
+  _op41: =>
+    @_loadIndirectX()
+    @_readMemory()
+    @_doEOR()
+
+  _op45: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doEOR()
+
+  _op46: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doLSR()
+    @_writeMemory()
+
+  _op48: =>
+    @_doPHA()
+
+  _op49: =>
+    @_loadImmediate()
+    @_doEOR()
+
+  _op4A: =>
+    @_readAC()
+    @_doLSR()
+    @_writeAC()
+
+  _op4C: =>
+    @_loadAbsolute()
+    @_doJMP()
+
+  _op4D: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doEOR()
+
+  _op4E: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doLSR()
+    @_writeMemory()
+
+  _op50: =>
+    @_loadRelative()
+    @_doBVC()
+
+  _op51: =>
+    @_loadIndirectY()
+    @_readMemory()
+    @_doEOR()
+
+  _op55: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doEOR()
+
+  _op56: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doLSR()
+    @_writeMemory()
+
+  _op58: =>
+    @_doCLI()
+
+  _op59: =>
+    @_loadAbsoluteY()
+    @_readMemory()
+    @_doEOR()
+
+  _op5D: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doEOR()
+
+  _op5E: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doLSR()
+    @_writeMemory()
+
+  _op60: =>
+    @_doRTS()
+
+  _op61: =>
+    @_loadIndirectX()
+    @_readMemory()
+    @_doADC()
+
+  _op65: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doADC()
+
+  _op66: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doROR()
+    @_writeMemory()
+
+  _op68: =>
+    @_doPLA()
+
+  _op69: =>
+    @_loadImmediate()
+    @_doADC()
+
+  _op6A: =>
+    @_readAC()
+    @_doROR()
+    @_writeAC()
+
+  _op6C: =>
+    @_loadIndirect()
+    @_doJMP()
+
+  _op6D: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doADC()
+
+  _op6E: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doROR()
+    @_writeMemory()
+
+  _op70: =>
+    @_loadRelative()
+    @_doBVS()
+
+  _op71: =>
+    @_loadIndirectY()
+    @_readMemory()
+    @_doADC()
+
+  _op75: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doADC()
+
+  _op76: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doROR()
+    @_writeMemory()
+
+  _op78: =>
+    @_doSEI()
+
+  _op79: =>
+    @_loadAbsoluteY()
+    @_readMemory()
+    @_doADC()
+
+  _op7D: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doADC()
+
+  _op7E: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doROR()
+    @_writeMemory()
+
+  _op81: =>
+    @_loadIndirectX()
+    @_doSTA()
+    @_writeMemory()
+
+  _op84: =>
+    @_loadZeroPage()
+    @_doSTY()
+    @_writeMemory()
+
+  _op85: =>
+    @_loadZeroPage()
+    @_doSTA()
+    @_writeMemory()
+
+  _op86: =>
+    @_loadZeroPage()
+    @_doSTX()
+    @_writeMemory()
+
+  _op88: =>
+    @_doDEY()
+
+  _op8A: =>
+    @_doTXA()
+
+  _op8C: =>
+    @_loadAbsolute()
+    @_doSTY()
+    @_writeMemory()
+
+  _op8D: =>
+    @_loadAbsolute()
+    @_doSTA()
+    @_writeMemory()
+
+  _op8E: =>
+    @_loadAbsolute()
+    @_doSTX()
+    @_writeMemory()
+
+  _op90: =>
+    @_loadRelative()
+    @_doBCC()
+
+  _op91: =>
+    @_loadIndirectY()
+    @_doSTA()
+    @_writeMemory()
+
+  _op94: =>
+    @_loadZeroPageX()
+    @_doSTY()
+    @_writeMemory()
+
+  _op95: =>
+    @_loadZeroPageX()
+    @_doSTA()
+    @_writeMemory()
+
+  _op96: =>
+    @_loadZeroPageY()
+    @_doSTX()
+    @_writeMemory()
+
+  _op98: =>
+    @_doTYA()
+
+  _op99: =>
+    @_loadAbsoluteY()
+    @_doSTA()
+    @_writeMemory()
+
+  _op9A: =>
+    @_doTXS()
+
+  _op9D: =>
+    @_loadAbsoluteX()
+    @_doSTA()
+    @_writeMemory()
+
+  _opA0: =>
+    @_loadImmediate()
+    @_doLDY()
+
+  _opA1: =>
+    @_loadIndirectX()
+    @_readMemory()
+    @_doLDA()
+
+  _opA2: =>
+    @_loadImmediate()
+    @_doLDX()
+
+  _opA4: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doLDY()
+
+  _opA5: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doLDA()
+
+  _opA6: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doLDX()
+
+  _opA8: =>
+    @_doTAY()
+
+  _opA9: =>
+    @_loadImmediate()
+    @_doLDA()
+
+  _opAA: =>
+    @_doTAX()
+
+  _opAC: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doLDY()
+
+  _opAD: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doLDA()
+
+  _opAE: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doLDX()
+
+  _opB0: =>
+    @_loadRelative()
+    @_doBCS()
+
+  _opB1: =>
+    @_loadIndirectY()
+    @_readMemory()
+    @_doLDA()
+
+  _opB4: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doLDY()
+
+  _opB5: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doLDA()
+
+  _opB6: =>
+    @_loadZeroPageY()
+    @_readMemory()
+    @_doLDX()
+
+  _opB8: =>
+    @_doCLV()
+
+  _opB9: =>
+    @_loadAbsoluteY()
+    @_readMemory()
+    @_doLDA()
+
+  _opBA: =>
+    @_doTSX()
+
+  _opBC: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doLDY()
+
+  _opBD: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doLDA()
+
+  _opBE: =>
+    @_loadAbsoluteY()
+    @_readMemory()
+    @_doLDX()
+
+  _opC0: =>
+    @_loadImmediate()
+    @_doCPY()
+
+  _opC1: =>
+    @_loadIndirectX()
+    @_readMemory()
+    @_doCMP()
+
+  _opC4: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doCPY()
+
+  _opC5: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doCMP()
+
+  _opC6: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doDEC()
+    @_writeMemory()
+
+  _opC8: =>
+    @_doINY()
+
+  _opC9: =>
+    @_loadImmediate()
+    @_doCMP()
+
+  _opCA: =>
+    @_doDEX()
+
+  _opCC: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doCPY()
+
+  _opCD: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doCMP()
+
+  _opCE: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doDEC()
+    @_writeMemory()
+
+  _opD0: =>
+    @_loadRelative()
+    @_doBNE()
+
+  _opD1: =>
+    @_loadIndirectY()
+    @_readMemory()
+    @_doCMP()
+
+  _opD5: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doCMP()
+
+  _opD6: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doDEC()
+    @_writeMemory()
+
+  _opD8: =>
+    @_doCLD()
+
+  _opD9: =>
+    @_loadAbsoluteY()
+    @_readMemory()
+    @_doCMP()
+
+  _opDD: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doCMP()
+
+  _opDE: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doDEC()
+    @_writeMemory()
+
+  _opE0: =>
+    @_loadImmediate()
+    @_doCPX()
+
+  _opE1: =>
+    @_loadIndirectX()
+    @_readMemory()
+    @_doSBC()
+
+  _opE4: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doCPX()
+
+  _opE5: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doSBC()
+
+  _opE6: =>
+    @_loadZeroPage()
+    @_readMemory()
+    @_doINC()
+    @_writeMemory()
+
+  _opE8: =>
+    @_doINX()
+
+  _opE9: =>
+    @_loadImmediate()
+    @_doSBC()
+
+  _opEA: =>
+
+  _opEC: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doCPX()
+
+  _opED: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doSBC()
+
+  _opEE: =>
+    @_loadAbsolute()
+    @_readMemory()
+    @_doINC()
+    @_writeMemory()
+
+  _opF0: =>
+    @_loadRelative()
+    @_doBEQ()
+
+  _opF1: =>
+    @_loadIndirectY()
+    @_readMemory()
+    @_doSBC()
+
+  _opF5: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doSBC()
+
+  _opF6: =>
+    @_loadZeroPageX()
+    @_readMemory()
+    @_doINC()
+    @_writeMemory()
+
+  _opF8: =>
+    @_doSED()
+
+  _opF9: =>
+    @_loadAbsoluteY()
+    @_readMemory()
+    @_doSBC()
+
+  _opFD: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doSBC()
+
+  _opFE: =>
+    @_loadAbsoluteX()
+    @_readMemory()
+    @_doINC()
+    @_writeMemory()
+
+  #--------------------------------------------------------------------------
+  
+  _updateNZ: =>
+    # update negative flag
+    if (@_i & FLAG_NEGATIVE) is FLAG_NEGATIVE
+      @sr |= FLAG_NEGATIVE
+    else
+      @sr &= ~FLAG_NEGATIVE
+    # update zero flag
+    if @_i is 0
+      @sr |= FLAG_ZERO
+    else
+      @sr &= ~FLAG_ZERO
+
+  #--------------------------------------------------------------------------
 
 exports.Cpu6502 = Cpu6502
 

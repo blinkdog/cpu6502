@@ -1,14 +1,19 @@
 {
     "name": "cpu6502",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "MOS 6502 in CoffeeScript",
     "keywords": [
+        "2A03",
+        "2A07",
+        "6502",
+        "6510",
+        "8510",
         "cpu",
         "emulator",
         "simulator"
     ],
-    "homepage": "https://github.com/blinkdog/telnet-stream",
-    "bugs": "https://github.com/blinkdog/telnet-stream/issues",
+    "homepage": "https://github.com/blinkdog/cpu6502",
+    "bugs": "https://github.com/blinkdog/cpu6502/issues",
     "license": "AGPL-3.0",
     "author": "Patrick Meade <veloxi@ticon.net>",
     "files": [
@@ -25,7 +30,7 @@
         "coffee-script": "1.8.0",
         "istanbul": "0.3.5",
         "mocha": "2.1.0",
-        "should": "4.4.1",
+        "should": "4.4.2",
         "underscore": "1.7.0"
     }
 }

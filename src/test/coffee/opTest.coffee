@@ -685,6 +685,64 @@ describe 'Operations', ->
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x05
 
+    it '[0x68] should PLA', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x68]
+        .putAt 0x01ff, 0xc0
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.sp -= 0x01
+      cycles = cpu.execute()
+      cycles.should.equal 4
+      cpu.ac.should.equal 0xc0
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x6A] should ROR A', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x6A]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0xaa
+      cpu.sr |= FLAG_NEGATIVE
+      cpu.sr &= ~FLAG_ZERO
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x55
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x6A] should ROR A with FLAG_CARRY', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x6A]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x7f
+      cpu.sr = FLAG_RESERVED | FLAG_CARRY
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0xbf
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED | FLAG_CARRY
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
     it '[0x6C] should JMP', ->
       memory = new MemoryBuilder()
         .resetAt 0xC000
@@ -756,6 +814,24 @@ describe 'Operations', ->
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
 
+    it '[0x88] should DEY', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0x88]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.yr = 0x60
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x5f
+
     it '[0x8A] should TXA', ->
       memory = new MemoryBuilder()
         .resetAt 0xC000
@@ -774,6 +850,26 @@ describe 'Operations', ->
       cpu.sp.should.equal 0xFF
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
+
+    it '[0x8C] should STY $nnnn', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0x8c, 0x50, 0x80]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.yr = 0x42
+      mem.read(0x8050).should.equal 0x00
+      cycles = cpu.execute()
+      cycles.should.equal 4
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc003
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xFF
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x42
+      mem.read(0x8050).should.equal 0x42
 
     it '[0x90] should BCC', ->
       memory = new MemoryBuilder()
@@ -1029,6 +1125,43 @@ describe 'Operations', ->
       cpu.xr.should.equal 0xff
       cpu.yr.should.equal 0x00
 
+    it '[0xC8] should INY', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xc8]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.yr = 0x7f
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x80
+
+    it '[0xCE] should DEC', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xce, 0x50, 0x80]
+        .putAt 0x8050, 0x60
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 6
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc003
+      cpu.sr.should.equal FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+      mem.read(0x8050).should.equal 0x5f
+
     it '[0xD8] should CLD', ->
       memory = new MemoryBuilder()
         .resetAt 0xC000
@@ -1046,6 +1179,43 @@ describe 'Operations', ->
       cpu.sp.should.equal 0xff
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
+
+    it '[0xE8] should INX', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xe8]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.xr = 0x7f
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x80
+      cpu.yr.should.equal 0x00
+
+    it '[0xEE] should INC', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xee, 0x50, 0x80]
+        .putAt 0x8050, 0x7f
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 6
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc003
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+      mem.read(0x8050).should.equal 0x80
 
     it '[0xF0] should BEQ with FLAG_ZERO', ->
       memory = new MemoryBuilder()

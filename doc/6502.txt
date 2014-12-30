@@ -753,7 +753,7 @@ the 6510 (the C64 processor).
 
   INY                    INY Increment Index Y by one                   INY
 
-  Operation:  X + 1 -> X                                N Z C I D V
+  Operation:  Y + 1 -> Y                                N Z C I D V
                                                         / / _ _ _ _
                                  (Ref: 7.5)
   +----------------+-----------------------+---------+---------+----------+

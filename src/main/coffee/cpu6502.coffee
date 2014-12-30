@@ -226,25 +226,38 @@ class Cpu6502
 
   _doCPY: => throw new Error 'Not Implemented'
 
-  _doDEC: => throw new Error 'Not Implemented'
+  _doDEC: =>
+    @_i = DATA @_i - 0x0001
+    @_updateNZ()
 
   _doDEX: =>
     @_i = DATA @xr - 0x0001
-    @xr = @_i
     @_updateNZ()
+    @xr = @_i
 
-  _doDEY: => throw new Error 'Not Implemented'
+  _doDEY: =>
+    @_i = DATA @yr - 0x0001
+    @_updateNZ()
+    @yr = @_i
 
   _doEOR: =>
     @_i ^= @ac
     @_updateNZ()
     @ac = @_i
 
-  _doINC: => throw new Error 'Not Implemented'
+  _doINC: =>
+    @_i = DATA @_i + 0x0001
+    @_updateNZ()
 
-  _doINX: => throw new Error 'Not Implemented'
+  _doINX: =>
+    @_i = DATA @xr + 0x0001
+    @_updateNZ()
+    @xr = @_i
 
-  _doINY: => throw new Error 'Not Implemented'
+  _doINY: =>
+    @_i = DATA @yr + 0x0001
+    @_updateNZ()
+    @yr = @_i
 
   _doJMP: =>
     @pc = @_j
@@ -286,7 +299,10 @@ class Cpu6502
   _doPHP: =>
     @_push @sr, STATUS_REGISTER
 
-  _doPLA: => throw new Error 'Not Implemented'
+  _doPLA: =>
+    @_i = @_pop ACCUMULATOR
+    @_updateNZ()
+    @ac = @_i
 
   _doPLP: =>
     @_i = @_pop STATUS_REGISTER
@@ -302,7 +318,15 @@ class Cpu6502
     @_i = DATA @_i
     @_updateNZ()
 
-  _doROR: => throw new Error 'Not Implemented'
+  _doROR: =>
+    if (@sr & FLAG_CARRY) is FLAG_CARRY
+      @_i |= 0x100
+    if (@_i & FLAG_CARRY) is FLAG_CARRY
+      @sr |= FLAG_CARRY
+    else
+      @sr &= ~FLAG_CARRY
+    @_i = DATA @_i >> 1
+    @_updateNZ()
 
   _doRTI: =>
     @sr = @_pop(STATUS_REGISTER) | FLAG_RESERVED
@@ -331,7 +355,8 @@ class Cpu6502
   _doSTX: =>
     @_i = @xr
 
-  _doSTY: => throw new Error 'Not Implemented'
+  _doSTY: =>
+    @_i = @yr
 
   _doTAX: =>
     @_i = @ac

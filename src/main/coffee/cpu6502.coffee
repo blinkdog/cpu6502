@@ -72,6 +72,10 @@ exports.ZERO_PAGE   = ZERO_PAGE   = "ZERO_PAGE"
 exports.ZERO_PAGE_X = ZERO_PAGE_X = "ZERO_PAGE_X"
 exports.ZERO_PAGE_Y = ZERO_PAGE_Y = "ZERO_PAGE_Y"
 
+exports.RETURN_ADDRESS_LO = RETURN_ADDRESS_LO = "RETURN_ADDRESS_LO"
+exports.RETURN_ADDRESS_HI = RETURN_ADDRESS_HI = "RETURN_ADDRESS_HI"
+exports.STATUS_REGISTER   = STATUS_REGISTER   = "STATUS_REGISTER"
+
 ADDR = (address) -> (address & 0xFFFF)
 DATA = (data) -> (data & 0xFF)
 HI = (address) -> ((address & 0xFF00) >> 8)
@@ -142,7 +146,10 @@ class Cpu6502
 
   _doADC: => throw new Error 'Not Implemented'
 
-  _doAND: => throw new Error 'Not Implemented'
+  _doAND: =>
+    @_i &= @ac
+    @_updateNZ()
+    @ac = @_i
 
   _doASL: =>
     if (@_i & 0x80) is 0x80
@@ -159,7 +166,20 @@ class Cpu6502
   _doBEQ: =>
     @_branch() if (@sr & FLAG_ZERO) is FLAG_ZERO
 
-  _doBIT: => throw new Error 'Not Implemented'
+  _doBIT: =>
+    if (@_i & FLAG_NEGATIVE) is FLAG_NEGATIVE
+      @sr |= FLAG_NEGATIVE
+    else
+      @sr &= ~FLAG_NEGATIVE
+    if (@_i & FLAG_OVERFLOW) is FLAG_OVERFLOW
+      @sr |= FLAG_OVERFLOW
+    else
+      @sr &= ~FLAG_OVERFLOW
+    @_i = @_i & @ac
+    if @_i is 0
+      @sr |= FLAG_ZERO
+    else
+      @sr &= ~FLAG_ZERO
 
   _doBMI: => throw new Error 'Not Implemented'
 
@@ -171,10 +191,10 @@ class Cpu6502
 
   _doBRK: =>
     @pc = ADDR @pc + 0x0001
-    @_push HI @pc
-    @_push LO @pc
+    @_push HI(@pc), RETURN_ADDRESS_HI
+    @_push LO(@pc), RETURN_ADDRESS_LO
     @sr |= FLAG_BREAK
-    @_push @sr
+    @_push @sr, STATUS_REGISTER
     @sr |= FLAG_INTERRUPT
     @pc = @mem.read(IRQ_LO, VECTOR_LO)
     @pc |= @mem.read(IRQ_HI, VECTOR_HI) << 8
@@ -217,7 +237,11 @@ class Cpu6502
 
   _doJMP: => throw new Error 'Not Implemented'
 
-  _doJSR: => throw new Error 'Not Implemented'
+  _doJSR: =>
+    @pc = ADDR @pc - 0x0001
+    @_push HI(@pc), RETURN_ADDRESS_HI
+    @_push LO(@pc), RETURN_ADDRESS_LO
+    @pc = @_j
 
   _doLDA: =>
     @ac = @_i
@@ -241,21 +265,31 @@ class Cpu6502
   _doPHA: => throw new Error 'Not Implemented'
 
   _doPHP: =>
-    @_push @sr
+    @_push @sr, STATUS_REGISTER
 
   _doPLA: => throw new Error 'Not Implemented'
 
-  _doPLP: => throw new Error 'Not Implemented'
+  _doPLP: =>
+    @_i = @_pop STATUS_REGISTER
+    @sr = @_i | FLAG_RESERVED
 
-  _doROL: => throw new Error 'Not Implemented'
+  _doROL: =>
+    @_i = @_i << 1
+    @_i |= (@sr & FLAG_CARRY)
+    if (@_i & 0x100) is 0x100
+      @sr |= FLAG_CARRY
+    else
+      @sr &= ~FLAG_CARRY
+    @_i = DATA @_i
+    @_updateNZ()
 
   _doROR: => throw new Error 'Not Implemented'
 
   _doRTI: => throw new Error 'Not Implemented'
 
   _doRTS: =>
-    @pc = @_pop()
-    @pc |= (@_pop() << 8)
+    @pc = @_pop RETURN_ADDRESS_LO
+    @pc |= (@_pop(RETURN_ADDRESS_HI) << 8)
     @pc = ADDR @pc + 0x0001
 
   _doSBC: => throw new Error 'Not Implemented'
@@ -1046,15 +1080,18 @@ class Cpu6502
 
   #--------------------------------------------------------------------------
 
-  _pop: =>
+  _pop: (mode) =>
     @sp = DATA @sp + 0x01
-    @mem.read STACK_PAGE + @sp, STACK
+    @mem.read STACK_PAGE + @sp, mode
 
-  _push: (data) =>
-    @mem.write STACK_PAGE + @sp, data, STACK
+  _push: (data, mode) =>
+    @mem.write STACK_PAGE + @sp, data, mode
     @sp = DATA @sp - 0x01
 
   #--------------------------------------------------------------------------
+
+  _readAC: =>
+    @_i = @ac
 
   _readMemory: (mode) =>
     @_i = @mem.read @_j, mode
@@ -1074,6 +1111,9 @@ class Cpu6502
       @sr &= ~FLAG_ZERO
 
   #--------------------------------------------------------------------------
+
+  _writeAC: =>
+    @ac = @_i
 
   _writeMemory: (mode) =>
     @mem.write @_j, @_i, mode

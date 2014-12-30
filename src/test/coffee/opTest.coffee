@@ -22,8 +22,10 @@ should = require 'should'
   CYCLE_TABLE,
   FLAG_BREAK,
   FLAG_CARRY,
+  FLAG_DECIMAL,
   FLAG_INTERRUPT,
   FLAG_NEGATIVE,
+  FLAG_OVERFLOW,
   FLAG_RESERVED,
   FLAG_ZERO
 } = require '../lib/cpu6502'
@@ -202,6 +204,141 @@ describe 'Operations', ->
       cpu.ac.should.equal 0x00
       cpu.pc.should.equal 0xc001
       cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x20] should JSR', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x20, 0x50, 0x80]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 6
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0x8050
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xfd
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+      mem.read(0x01ff).should.equal 0xc0
+      mem.read(0x01fe).should.equal 0x02
+
+    it '[0x24] should BIT $nn', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x24, 0x50]
+        .putAt 0x50, [0xcf]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x30
+      cycles = cpu.execute()
+      cycles.should.equal 3
+      cpu.ac.should.equal 0x30
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_OVERFLOW | FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x26] should ROL $nn', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x26, 0x50]
+        .putAt 0x50, [0x55]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 5
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+      mem.read(0x0050).should.equal 0xaa
+
+    it '[0x28] should PLP', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x28]
+        .putAt 0x01ff, (~FLAG_RESERVED & 0xFF)
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.sp -= 0x01
+      cycles = cpu.execute()
+      cycles.should.equal 4
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_OVERFLOW | FLAG_RESERVED | FLAG_BREAK | FLAG_DECIMAL | FLAG_INTERRUPT | FLAG_ZERO | FLAG_CARRY
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x29] should AND #$nn', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x29, 0x55]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0xaa
+      cpu.sr &= ~FLAG_ZERO
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x2A] should ROL A', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x2A]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0xaa
+      cpu.sr |= FLAG_NEGATIVE
+      cpu.sr &= ~FLAG_ZERO
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x54
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_CARRY
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x2C] should BIT $nnnn', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x2C, 0x50, 0x80]
+        .putAt 0x8050, [0x32]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x02
+      cpu.sr |= FLAG_NEGATIVE | FLAG_OVERFLOW | FLAG_ZERO
+      cycles = cpu.execute()
+      cycles.should.equal 4
+      cpu.ac.should.equal 0x02
+      cpu.pc.should.equal 0xc003
+      cpu.sr.should.equal FLAG_RESERVED
       cpu.sp.should.equal 0xff
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00

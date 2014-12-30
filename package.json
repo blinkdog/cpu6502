@@ -1,6 +1,6 @@
 {
     "name": "cpu6502",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "description": "MOS 6502 in CoffeeScript",
     "keywords": [
         "2A03",

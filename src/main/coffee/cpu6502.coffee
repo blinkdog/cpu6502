@@ -364,13 +364,18 @@ class Cpu6502
     if (@_j & 0xff00) isnt (oldj & 0xff00)
       @extraCycle = 1
 
-  _loadAccumulator: => throw new Error 'Not Implemented'
-
   _loadImmediate: =>
     @_i = @mem.read(@pc, IMMEDIATE)
     @pc = ADDR @pc + 0x0001
   
-  _loadIndirect: => throw new Error 'Not Implemented'
+  _loadIndirect: =>
+    @_k = @mem.read(@pc, INDIRECT)
+    @pc = ADDR @pc + 0x0001
+    @_k |= (@mem.read(@pc, INDIRECT) << 8)
+    @pc = ADDR @pc + 0x0001
+    @_j = @mem.read(@_k, INDIRECT)
+    @_k = ADDR @_k + 0x0001
+    @_j |= (@mem.read(@_k, INDIRECT) << 8)
 
   _loadIndirectX: =>
     @_k = @mem.read(@pc, INDIRECT_X)
@@ -385,7 +390,7 @@ class Cpu6502
     @pc = ADDR @pc + 0x0001
     @_j = @mem.read(@_k, INDIRECT_Y)
     @_k = DATA @_k + 0x01
-    @_j |= @mem.read(@_k, INDIRECT_X) << 8
+    @_j |= @mem.read(@_k, INDIRECT_Y) << 8
     oldj = @_j
     @_j = ADDR @_j + @yr
     if (@_j & 0xff00) isnt (oldj & 0xff00)
@@ -400,11 +405,14 @@ class Cpu6502
     @pc = ADDR @pc + 0x0001
 
   _loadZeroPageX: =>
-    @_j = @mem.read(@pc, ZERO_PAGE)
+    @_j = @mem.read(@pc, ZERO_PAGE_X)
     @pc = ADDR @pc + 0x0001
     @_j = ADDR @_j + @xr
 
-  _loadZeroPageY: => throw new Error 'Not Implemented'
+  _loadZeroPageY: =>
+    @_j = @mem.read(@pc, ZERO_PAGE_Y)
+    @pc = ADDR @pc + 0x0001
+    @_j = ADDR @_j + @yr
 
   #--------------------------------------------------------------------------
 

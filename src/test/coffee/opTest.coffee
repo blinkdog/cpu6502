@@ -556,6 +556,24 @@ describe 'Operations', ->
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
 
+    it '[0x4A] should LSR A', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x4a]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x02
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x01
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
     it '[0x4C] should JMP', ->
       memory = new MemoryBuilder()
         .resetAt 0xC000
@@ -568,6 +586,66 @@ describe 'Operations', ->
       cycles.should.equal 3
       cpu.ac.should.equal 0x00
       cpu.pc.should.equal 0x8050
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x51] should EOR ($nn),y', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x51, 0x4c]
+        .putAt 0x004c, [0xf0, 0x21]
+        .putAt 0x2222, [0xa5]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0xaa
+      cpu.yr = 0x32
+      cycles = cpu.execute()
+      cycles.should.equal 6
+      cpu.ac.should.equal 0x0f
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x32
+
+    it '[0x59] should EOR $nnnn,y', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x59, 0x50, 0x80]
+        .putAt 0x8055, [0xa5]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0xaa
+      cpu.yr = 0x05
+      cycles = cpu.execute()
+      cycles.should.equal 4
+      cpu.ac.should.equal 0x0f
+      cpu.pc.should.equal 0xc003
+      cpu.sr.should.equal FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x05
+
+    it '[0x6C] should JMP', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x6c, 0xff, 0x80]
+        .putAt 0x8000, [0xa0]
+        .putAt 0x80ff, [0xd0, 0x90]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 5
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0x90d0
       cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
       cpu.sp.should.equal 0xff
       cpu.xr.should.equal 0x00
@@ -625,6 +703,25 @@ describe 'Operations', ->
       cpu.sp.should.equal 0xFF
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
+
+    it '[0xB6] should LDX $nn,y', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0xb6, 0x40]
+        .putAt 0x85, 0x55
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.yr = 0x45
+      cycles = cpu.execute()
+      cycles.should.equal 4
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xC002
+      cpu.sr.should.equal FLAG_RESERVED
+      cpu.sp.should.equal 0xFF
+      cpu.xr.should.equal 0x55
+      cpu.yr.should.equal 0x45
 
     it '[0xF0] should BEQ with FLAG_ZERO', ->
       memory = new MemoryBuilder()

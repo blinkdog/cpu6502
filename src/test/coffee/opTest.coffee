@@ -647,6 +647,24 @@ describe 'Operations', ->
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x32
 
+    it '[0x58] should CLI', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x58]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.sr |= FLAG_INTERRUPT
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
     it '[0x59] should EOR $nnnn,y', ->
       memory = new MemoryBuilder()
         .resetAt 0xC000
@@ -717,6 +735,23 @@ describe 'Operations', ->
       cpu.ac.should.equal 0x00
       cpu.pc.should.equal 0xc002
       cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x78] should SEI', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x78]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO | FLAG_INTERRUPT
       cpu.sp.should.equal 0xff
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
@@ -863,6 +898,42 @@ describe 'Operations', ->
       cpu.xr.should.equal 0x55
       cpu.yr.should.equal 0x45
 
+    it '[0xB8] should CLV', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0xb8]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.sr |= FLAG_OVERFLOW
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0xD8] should CLD', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0xd8]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.sr |= FLAG_DECIMAL
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
     it '[0xF0] should BEQ with FLAG_ZERO', ->
       memory = new MemoryBuilder()
         .resetAt 0xC000
@@ -895,6 +966,23 @@ describe 'Operations', ->
       cpu.pc.should.equal 0xC002
       cpu.sr.should.equal FLAG_RESERVED
       cpu.sp.should.equal 0xFF
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0xF8] should SED', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0xf8]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO | FLAG_DECIMAL
+      cpu.sp.should.equal 0xff
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
 

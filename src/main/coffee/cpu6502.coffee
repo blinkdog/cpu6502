@@ -211,11 +211,14 @@ class Cpu6502
   _doCLC: =>
     @sr &= ~FLAG_CARRY
 
-  _doCLD: => throw new Error 'Not Implemented'
+  _doCLD: =>
+    @sr &= ~FLAG_DECIMAL
 
-  _doCLI: => throw new Error 'Not Implemented'
+  _doCLI: =>
+    @sr &= ~FLAG_INTERRUPT
 
-  _doCLV: => throw new Error 'Not Implemented'
+  _doCLV: =>
+    @sr &= ~FLAG_OVERFLOW
 
   _doCMP: => throw new Error 'Not Implemented'
 
@@ -316,9 +319,11 @@ class Cpu6502
   _doSEC: =>
     @sr |= FLAG_CARRY
     
-  _doSED: => throw new Error 'Not Implemented'
+  _doSED: =>
+    @sr |= FLAG_DECIMAL
 
-  _doSEI: => throw new Error 'Not Implemented'
+  _doSEI: =>
+    @sr |= FLAG_INTERRUPT
 
   _doSTA: =>
     @_i = @ac

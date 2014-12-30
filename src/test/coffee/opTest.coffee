@@ -343,6 +343,144 @@ describe 'Operations', ->
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
 
+    it '[0x30] should BMI', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x30, 0x10]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x85
+      cpu.sr = FLAG_NEGATIVE | FLAG_RESERVED
+      cycles = cpu.execute()
+      cycles.should.equal 3
+      cpu.ac.should.equal 0x85
+      cpu.pc.should.equal 0xc012
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x30] should not BMI without FLAG_NEGATIVE', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x30, 0x10]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x31] should AND ($nn),y', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x31, 0x4c]
+        .putAt 0x004c, [0x00, 0x21]
+        .putAt 0x2105, 0x81
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0xff
+      cpu.sr = FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.yr = 0x05
+      cycles = cpu.execute()
+      cycles.should.equal 5
+      cpu.ac.should.equal 0x81
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x05
+
+    it '[0x35] should AND $nn,x', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x35, 0x70]
+        .putAt 0x007f, 0x55
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0xaa
+      cpu.sr = FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.xr = 0x0f
+      cycles = cpu.execute()
+      cycles.should.equal 4
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x0f
+      cpu.yr.should.equal 0x00
+
+    it '[0x38] should SEC', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x38]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO | FLAG_CARRY
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x39] should AND $nnnn,y', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x39, 0xf0, 0x80]
+        .putAt 0x8120, 0x55
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0xaa
+      cpu.sr = FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.yr = 0x30
+      cycles = cpu.execute()
+      cycles.should.equal 5
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc003
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x30
+
+    it '[0x3D] should AND $nnnn,y', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x3D, 0xf0, 0x80]
+        .putAt 0x8120, 0x55
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0xaa
+      cpu.sr = FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.xr = 0x30
+      cycles = cpu.execute()
+      cycles.should.equal 5
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc003
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x30
+      cpu.yr.should.equal 0x00
+
     it '[0xA0] should LDY #Immediate', ->
       memory = new MemoryBuilder()
         .resetAt 0xC000

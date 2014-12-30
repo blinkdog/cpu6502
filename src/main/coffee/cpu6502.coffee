@@ -181,7 +181,8 @@ class Cpu6502
     else
       @sr &= ~FLAG_ZERO
 
-  _doBMI: => throw new Error 'Not Implemented'
+  _doBMI: =>
+    @_branch() if (@sr & FLAG_NEGATIVE) is FLAG_NEGATIVE
 
   _doBNE: =>
     @_branch() if (@sr & FLAG_ZERO) is 0
@@ -294,8 +295,9 @@ class Cpu6502
 
   _doSBC: => throw new Error 'Not Implemented'
 
-  _doSEC: => throw new Error 'Not Implemented'
-
+  _doSEC: =>
+    @sr |= FLAG_CARRY
+    
   _doSED: => throw new Error 'Not Implemented'
 
   _doSEI: => throw new Error 'Not Implemented'
@@ -333,9 +335,20 @@ class Cpu6502
     @pc = ADDR @pc + 0x0001
     @_j |= (@mem.read(@pc, ABSOLUTE_X) << 8)
     @pc = ADDR @pc + 0x0001
+    oldj = @_j
     @_j = ADDR @_j + @xr
+    if (@_j & 0xff00) isnt (oldj & 0xff00)
+      @extraCycle = 1
   
-  _loadAbsoluteY: => throw new Error 'Not Implemented'
+  _loadAbsoluteY: =>
+    @_j = @mem.read(@pc, ABSOLUTE_Y)
+    @pc = ADDR @pc + 0x0001
+    @_j |= (@mem.read(@pc, ABSOLUTE_Y) << 8)
+    @pc = ADDR @pc + 0x0001
+    oldj = @_j
+    @_j = ADDR @_j + @yr
+    if (@_j & 0xff00) isnt (oldj & 0xff00)
+      @extraCycle = 1
 
   _loadAccumulator: => throw new Error 'Not Implemented'
 
@@ -353,8 +366,17 @@ class Cpu6502
     @_k = DATA @_k + 0x01
     @_j |= @mem.read(@_k, INDIRECT_X) << 8
 
-  _loadIndirectY: => throw new Error 'Not Implemented'
-
+  _loadIndirectY: =>
+    @_k = @mem.read(@pc, INDIRECT_Y)
+    @pc = ADDR @pc + 0x0001
+    @_j = @mem.read(@_k, INDIRECT_Y)
+    @_k = DATA @_k + 0x01
+    @_j |= @mem.read(@_k, INDIRECT_X) << 8
+    oldj = @_j
+    @_j = ADDR @_j + @yr
+    if (@_j & 0xff00) isnt (oldj & 0xff00)
+      @extraCycle = 1
+    
   _loadRelative: =>
     @_i = @mem.read(@pc, RELATIVE)
     @pc = ADDR @pc + 0x0001
@@ -363,7 +385,10 @@ class Cpu6502
     @_j = @mem.read(@pc, ZERO_PAGE)
     @pc = ADDR @pc + 0x0001
 
-  _loadZeroPageX: => throw new Error 'Not Implemented'
+  _loadZeroPageX: =>
+    @_j = @mem.read(@pc, ZERO_PAGE)
+    @pc = ADDR @pc + 0x0001
+    @_j = ADDR @_j + @xr
 
   _loadZeroPageY: => throw new Error 'Not Implemented'
 

@@ -228,7 +228,10 @@ class Cpu6502
 
   _doDEY: => throw new Error 'Not Implemented'
 
-  _doEOR: => throw new Error 'Not Implemented'
+  _doEOR: =>
+    @_i ^= @ac
+    @_updateNZ()
+    @ac = @_i
 
   _doINC: => throw new Error 'Not Implemented'
 
@@ -236,7 +239,8 @@ class Cpu6502
 
   _doINY: => throw new Error 'Not Implemented'
 
-  _doJMP: => throw new Error 'Not Implemented'
+  _doJMP: =>
+    @pc = @_j
 
   _doJSR: =>
     @pc = ADDR @pc - 0x0001
@@ -256,14 +260,21 @@ class Cpu6502
     @yr = @_i
     @_updateNZ()
 
-  _doLSR: => throw new Error 'Not Implemented'
+  _doLSR: =>
+    if (@_i & FLAG_CARRY) is FLAG_CARRY
+      @sr |= FLAG_CARRY
+    else
+      @sr &= ~FLAG_CARRY
+    @_i = @_i >> 1
+    @_updateNZ()
 
   _doORA: =>
     @_i |= @ac
     @_updateNZ()
     @ac = @_i
 
-  _doPHA: => throw new Error 'Not Implemented'
+  _doPHA: =>
+    @_push @ac, ACCUMULATOR
 
   _doPHP: =>
     @_push @sr, STATUS_REGISTER
@@ -286,7 +297,10 @@ class Cpu6502
 
   _doROR: => throw new Error 'Not Implemented'
 
-  _doRTI: => throw new Error 'Not Implemented'
+  _doRTI: =>
+    @sr = @_pop(STATUS_REGISTER) | FLAG_RESERVED
+    @pc = @_pop RETURN_ADDRESS_LO
+    @pc |= (@_pop(RETURN_ADDRESS_HI) << 8)
 
   _doRTS: =>
     @pc = @_pop RETURN_ADDRESS_LO

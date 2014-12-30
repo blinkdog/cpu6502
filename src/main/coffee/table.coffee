@@ -74,6 +74,25 @@ doMnemonic = (mnem) ->
   return null if mnem is 'NOP'
   "_do#{mnem}"
 
+srcMode = (mode) ->
+  switch mode
+    when "Absolute" then "ABSOLUTE"
+    when "Absolute,X" then "ABSOLUTE_X"
+    when "Absolute,Y" then "ABSOLUTE_Y"
+    when "Accumulator" then "ACCUMULATOR"
+    when "Immediate" then "IMMEDIATE"
+    when "Implied" then "IMPLIED"
+    when "Indirect" then "INDIRECT"
+    when "(Indirect,X)" then "INDIRECT_X"
+    when "(Indirect),Y" then "INDIRECT_Y"
+    when "Relative" then "RELATIVE"
+    when "Zero Page" then "ZERO_PAGE"
+    when "Zero Page,X" then "ZERO_PAGE_X"
+    when "Zero Page,Y" then "ZERO_PAGE_Y"
+    else
+      console.log mode
+      false.should.equal true
+
 loadAddress = (mode) ->
   switch mode
     when "Absolute" then "_loadAbsolute"
@@ -188,11 +207,11 @@ exports.generateOp = (opcode) ->
   loadAddr = loadAddress info[1].trim()
   opImpl.push "    @#{loadAddr}()" if loadAddr?
   readIt = readData info[2].trim(), info[1].trim()
-  opImpl.push "    @#{readIt}()" if readIt?
+  opImpl.push "    @#{readIt} #{srcMode info[1].trim()}" if readIt?
   doMnem = doMnemonic info[2].trim()
   opImpl.push "    @#{doMnem}()" if doMnem?
   writeIt = writeData info[2].trim(), info[1].trim()
-  opImpl.push "    @#{writeIt}()" if writeIt?
+  opImpl.push "    @#{writeIt} #{srcMode info[1].trim()}" if writeIt?
   opImpl.join '\n'
 
 #----------------------------------------------------------------------------

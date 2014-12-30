@@ -333,17 +333,33 @@ class Cpu6502
 
   _doSTY: => throw new Error 'Not Implemented'
 
-  _doTAX: => throw new Error 'Not Implemented'
+  _doTAX: =>
+    @_i = @ac
+    @_updateNZ()
+    @xr = @_i
+  
+  _doTAY: =>
+    @_i = @ac
+    @_updateNZ()
+    @yr = @_i
 
-  _doTAY: => throw new Error 'Not Implemented'
+  _doTSX: =>
+    @_i = @sp
+    @_updateNZ()
+    @xr = @_i
 
-  _doTSX: => throw new Error 'Not Implemented'
+  _doTXA: =>
+    @_i = @xr
+    @_updateNZ()
+    @ac = @_i
 
-  _doTXA: => throw new Error 'Not Implemented'
+  _doTXS: =>
+    @sp = @xr
 
-  _doTXS: => throw new Error 'Not Implemented'
-
-  _doTYA: => throw new Error 'Not Implemented'
+  _doTYA: =>
+    @_i = @yr
+    @_updateNZ()
+    @ac = @_i
 
   #--------------------------------------------------------------------------
   

@@ -756,6 +756,25 @@ describe 'Operations', ->
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
 
+    it '[0x8A] should TXA', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x8a]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x85
+      cpu.sr = FLAG_NEGATIVE | FLAG_RESERVED
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xC001
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xFF
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
     it '[0x90] should BCC', ->
       memory = new MemoryBuilder()
         .resetAt 0xC000
@@ -788,6 +807,43 @@ describe 'Operations', ->
       cpu.pc.should.equal 0xc002
       cpu.sr.should.equal FLAG_RESERVED | FLAG_CARRY
       cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+      
+    it '[0x98] should TYA', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x98]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x85
+      cpu.sr = FLAG_NEGATIVE | FLAG_RESERVED
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xC001
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xFF
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x9A] should TXS', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x9a]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.sr = FLAG_NEGATIVE | FLAG_RESERVED
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.sp.should.equal 0x00
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
 
@@ -827,6 +883,26 @@ describe 'Operations', ->
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
 
+    it '[0xA8] should TAY', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0xa8]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x85
+      cpu.sr = FLAG_RESERVED | FLAG_ZERO
+      cpu.xr = 0x00
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x85
+      cpu.pc.should.equal 0xC001
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.sp.should.equal 0xFF
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x85
+
     it '[0xA9] should LDA #Immediate', ->
       memory = new MemoryBuilder()
         .resetAt 0xC000
@@ -842,6 +918,26 @@ describe 'Operations', ->
       cpu.sr.should.equal FLAG_RESERVED
       cpu.sp.should.equal 0xFF
       cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0xAA] should TAX', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0xaa]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x85
+      cpu.sr = FLAG_RESERVED | FLAG_ZERO
+      cpu.xr = 0x00
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x85
+      cpu.pc.should.equal 0xC001
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.sp.should.equal 0xFF
+      cpu.xr.should.equal 0x85
       cpu.yr.should.equal 0x00
 
     it '[0xB0] should BCS', ->
@@ -914,6 +1010,23 @@ describe 'Operations', ->
       cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
       cpu.sp.should.equal 0xff
       cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0xBA] should TSX', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0xba]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0xff
       cpu.yr.should.equal 0x00
 
     it '[0xD8] should CLD', ->

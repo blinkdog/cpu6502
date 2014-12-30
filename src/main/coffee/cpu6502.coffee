@@ -142,6 +142,21 @@ class Cpu6502
     if (@pc & 0xff00) isnt (oldpc & 0xff00)
       @extraCycle = 2 
 
+  _compare: (reg) =>
+    if @_i is reg
+      @sr |= FLAG_ZERO
+    else
+      @sr &= ~FLAG_ZERO
+    if reg < @_i
+      @sr &= ~FLAG_CARRY
+    else
+      @sr |= FLAG_CARRY
+    neg = DATA reg - @_i
+    if (neg & FLAG_NEGATIVE) is FLAG_NEGATIVE
+      @sr |= FLAG_NEGATIVE
+    else
+      @sr &= ~FLAG_NEGATIVE
+
   #--------------------------------------------------------------------------
 
   _doADC: => throw new Error 'Not Implemented'
@@ -220,11 +235,14 @@ class Cpu6502
   _doCLV: =>
     @sr &= ~FLAG_OVERFLOW
 
-  _doCMP: => throw new Error 'Not Implemented'
+  _doCMP: =>
+    @_compare @ac
 
-  _doCPX: => throw new Error 'Not Implemented'
+  _doCPX: =>
+    @_compare @xr
 
-  _doCPY: => throw new Error 'Not Implemented'
+  _doCPY: =>
+    @_compare @yr
 
   _doDEC: =>
     @_i = DATA @_i - 0x0001

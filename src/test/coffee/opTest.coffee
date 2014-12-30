@@ -1124,6 +1124,42 @@ describe 'Operations', ->
       cpu.sp.should.equal 0xff
       cpu.xr.should.equal 0xff
       cpu.yr.should.equal 0x00
+      
+    it '[0xC0] should CPY #$nn (N=0, Z=0, C=0)', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xc0, 0xe0]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.yr = 0x5f
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x5f
+
+    it '[0xC0] should CPY #$nn (N=0, Z=0, C=1)', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xc0, 0x40]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.yr = 0x41
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_CARRY
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x41
 
     it '[0xC8] should INY', ->
       memory = new MemoryBuilder()
@@ -1142,6 +1178,42 @@ describe 'Operations', ->
       cpu.sp.should.equal 0xff
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x80
+
+    it '[0xC9] should CMP #$nn (N=0, Z=0, C=0)', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xc9, 0xff]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x01
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x01
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0xC9] should CMP #$nn (N=1, Z=0, C=0)', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xc9, 0x80]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x7f
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x7f
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
 
     it '[0xCE] should DEC', ->
       memory = new MemoryBuilder()
@@ -1178,6 +1250,42 @@ describe 'Operations', ->
       cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
       cpu.sp.should.equal 0xff
       cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+      
+    it '[0xE0] should CPX #$nn (N=0, Z=0, C=1)', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xe0, 0x3f]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.xr = 0x40
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_CARRY
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x40
+      cpu.yr.should.equal 0x00
+
+    it '[0xE0] should CPX #$nn (N=0, Z=1, C=1)', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xe0, 0x40]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.xr = 0x40
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO | FLAG_CARRY
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x40
       cpu.yr.should.equal 0x00
 
     it '[0xE8] should INX', ->

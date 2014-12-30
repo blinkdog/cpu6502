@@ -159,9 +159,11 @@ class Cpu6502
     @_i = DATA @_i << 1
     @_updateNZ()
 
-  _doBCC: => throw new Error 'Not Implemented'
+  _doBCC: =>
+    @_branch() if (@sr & FLAG_CARRY) is 0
 
-  _doBCS: => throw new Error 'Not Implemented'
+  _doBCS: =>
+    @_branch() if (@sr & FLAG_CARRY) is FLAG_CARRY
 
   _doBEQ: =>
     @_branch() if (@sr & FLAG_ZERO) is FLAG_ZERO
@@ -200,9 +202,11 @@ class Cpu6502
     @pc = @mem.read(IRQ_LO, VECTOR_LO)
     @pc |= @mem.read(IRQ_HI, VECTOR_HI) << 8
   
-  _doBVC: => throw new Error 'Not Implemented'
+  _doBVC: =>
+    @_branch() if (@sr & FLAG_OVERFLOW) is 0
 
-  _doBVS: => throw new Error 'Not Implemented'
+  _doBVS: =>
+    @_branch() if (@sr & FLAG_OVERFLOW) is FLAG_OVERFLOW
 
   _doCLC: =>
     @sr &= ~FLAG_CARRY

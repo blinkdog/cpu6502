@@ -591,6 +591,41 @@ describe 'Operations', ->
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
 
+    it '[0x50] should BVC', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x50, 0x10]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 3
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc012
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x50] should not BVC on FLAG_OVERFLOW', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x50, 0x10]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.sr = FLAG_OVERFLOW | FLAG_RESERVED
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_OVERFLOW | FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
     it '[0x51] should EOR ($nn),y', ->
       memory = new MemoryBuilder()
         .resetAt 0xC000
@@ -651,6 +686,76 @@ describe 'Operations', ->
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
 
+    it '[0x70] should BVS', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x70, 0x10]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.sr = FLAG_OVERFLOW | FLAG_RESERVED
+      cycles = cpu.execute()
+      cycles.should.equal 3
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc012
+      cpu.sr.should.equal FLAG_OVERFLOW | FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x70] should not BVS without FLAG_OVERFLOW', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x70, 0x10]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x90] should BCC', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x90, 0x10]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 3
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc012
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x90] should not BCC on FLAG_CARRY', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x90, 0x10]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.sr = FLAG_RESERVED | FLAG_CARRY
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_CARRY
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
     it '[0xA0] should LDY #Immediate', ->
       memory = new MemoryBuilder()
         .resetAt 0xC000
@@ -701,6 +806,41 @@ describe 'Operations', ->
       cpu.pc.should.equal 0xC002
       cpu.sr.should.equal FLAG_RESERVED
       cpu.sp.should.equal 0xFF
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0xB0] should BCS', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0xb0, 0x10]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.sr = FLAG_RESERVED | FLAG_CARRY
+      cycles = cpu.execute()
+      cycles.should.equal 3
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc012
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_CARRY
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0xB0] should not BCS without FLAG_CARRY', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0xb0, 0x10]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
 

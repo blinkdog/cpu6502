@@ -166,7 +166,8 @@ class Cpu6502
   _doBNE: =>
     @_branch() if (@sr & FLAG_ZERO) is 0
 
-  _doBPL: => throw new Error 'Not Implemented'
+  _doBPL: =>
+    @_branch() if (@sr & FLAG_NEGATIVE) is 0
 
   _doBRK: =>
     @pc = ADDR @pc + 0x0001
@@ -182,7 +183,8 @@ class Cpu6502
 
   _doBVS: => throw new Error 'Not Implemented'
 
-  _doCLC: => throw new Error 'Not Implemented'
+  _doCLC: =>
+    @sr &= ~FLAG_CARRY
 
   _doCLD: => throw new Error 'Not Implemented'
 

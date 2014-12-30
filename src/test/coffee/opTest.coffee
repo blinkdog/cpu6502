@@ -152,6 +152,60 @@ describe 'Operations', ->
       cpu.yr.should.equal 0x00
       mem.read(0x01ff).should.equal FLAG_RESERVED | FLAG_ZERO
 
+    it '[0x10] should BPL', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x10, 0x10]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cycles = cpu.execute()
+      cycles.should.equal 3
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc012
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x10] should not BPL on FLAG_NEGATIVE', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x10, 0x10]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x85
+      cpu.sr = FLAG_NEGATIVE | FLAG_RESERVED
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x85
+      cpu.pc.should.equal 0xc002
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_RESERVED
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
+    it '[0x18] should CLC', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xC000
+        .put [0x18]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.sr |= FLAG_CARRY
+      cycles = cpu.execute()
+      cycles.should.equal 2
+      cpu.ac.should.equal 0x00
+      cpu.pc.should.equal 0xc001
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_ZERO
+      cpu.sp.should.equal 0xff
+      cpu.xr.should.equal 0x00
+      cpu.yr.should.equal 0x00
+
     it '[0xA0] should LDY #Immediate', ->
       memory = new MemoryBuilder()
         .resetAt 0xC000

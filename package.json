@@ -1,6 +1,6 @@
 {
     "name": "cpu6502",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "description": "MOS 6502 in CoffeeScript",
     "keywords": [
         "2A03",
@@ -8,8 +8,13 @@
         "6502",
         "6510",
         "8510",
+        "apple",
+        "atari",
+        "commodore",
         "cpu",
         "emulator",
+        "nes",
+        "nintendo",
         "simulator"
     ],
     "homepage": "https://github.com/blinkdog/cpu6502",

@@ -71,7 +71,7 @@ describe 'Operations', ->
       cycles.should.equal 7
       cpu.ac.should.equal 0x00
       cpu.pc.should.equal 0xdead
-      cpu.sr.should.equal FLAG_RESERVED | FLAG_BREAK | FLAG_INTERRUPT | FLAG_ZERO
+      cpu.sr.should.equal FLAG_RESERVED | FLAG_INTERRUPT | FLAG_ZERO
       cpu.sp.should.equal 0xfc
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
@@ -279,7 +279,7 @@ describe 'Operations', ->
       cycles.should.equal 4
       cpu.ac.should.equal 0x00
       cpu.pc.should.equal 0xc001
-      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_OVERFLOW | FLAG_RESERVED | FLAG_BREAK | FLAG_DECIMAL | FLAG_INTERRUPT | FLAG_ZERO | FLAG_CARRY
+      cpu.sr.should.equal FLAG_NEGATIVE | FLAG_OVERFLOW | FLAG_RESERVED | FLAG_DECIMAL | FLAG_INTERRUPT | FLAG_ZERO | FLAG_CARRY
       cpu.sp.should.equal 0xff
       cpu.xr.should.equal 0x00
       cpu.yr.should.equal 0x00
@@ -1562,6 +1562,264 @@ describe 'Operations', ->
       cycles.should.equal 6
       cpu.pc.should.equal 0xd000
       cpu.sp.should.equal 0xff
+
+  describe 'ADC Instruction', ->
+    ###
+      Some test cases in this subsection were written using reference
+      documentation found at: <http://www.6502.org/tutorials/vflag.html>
+    ###
+    it 'AC=0x00 IMM=0x00 C=0 -> AC=0x00 N=0 V=0 C=0 Z=1', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0x69, 0x00]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x00
+      cycles = cpu.execute()
+      cpu.ac.should.equal 0x00
+      should(cpu.sr & FLAG_NEGATIVE).equal 0
+      should(cpu.sr & FLAG_OVERFLOW).equal 0
+      should(cpu.sr & FLAG_RESERVED).equal FLAG_RESERVED
+      should(cpu.sr & FLAG_ZERO).equal FLAG_ZERO
+      should(cpu.sr & FLAG_CARRY).equal 0
+
+    #  CLC      ; 1 + 1 = 2, returns C = 0
+    #  LDA #$01
+    #  ADC #$01
+    it 'AC=0x01 IMM=0x01 C=0 -> AC=0x02 C=0', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0x69, 0x01]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x01
+      cycles = cpu.execute()
+      cpu.ac.should.equal 0x02
+      should(cpu.sr & FLAG_RESERVED).equal FLAG_RESERVED
+      should(cpu.sr & FLAG_CARRY).equal 0
+
+    #  CLC      ; 1 + -1 = 0, returns C = 1
+    #  LDA #$01
+    #  ADC #$FF
+    it 'AC=0x01 IMM=0xFF C=0 -> AC=0x00 C=1 Z=1', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0x69, 0xff]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x01
+      cycles = cpu.execute()
+      cpu.ac.should.equal 0x00
+      should(cpu.sr & FLAG_RESERVED).equal FLAG_RESERVED
+      should(cpu.sr & FLAG_ZERO).equal FLAG_ZERO
+      should(cpu.sr & FLAG_CARRY).equal FLAG_CARRY
+
+    #  CLC      ; 127 + 1 = 128, returns C = 0
+    #  LDA #$7F
+    #  ADC #$01
+    it 'AC=0x7F IMM=0x01 C=0 -> AC=0x80 C=0', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0x69, 0x01]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x7f
+      cycles = cpu.execute()
+      cpu.ac.should.equal 0x80
+      should(cpu.sr & FLAG_RESERVED).equal FLAG_RESERVED
+      should(cpu.sr & FLAG_ZERO).equal 0
+      should(cpu.sr & FLAG_CARRY).equal 0
+
+    #  CLC      ; -128 + -1 = -129, returns C = 1
+    #  LDA #$80
+    #  ADC #$FF
+    it 'AC=0x80 IMM=0xFF C=0 -> AC=0x7F Z=0 C=1', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0x69, 0xff]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x80
+      cycles = cpu.execute()
+      cpu.ac.should.equal 0x7f
+      should(cpu.sr & FLAG_RESERVED).equal FLAG_RESERVED
+      should(cpu.sr & FLAG_ZERO).equal 0
+      should(cpu.sr & FLAG_CARRY).equal FLAG_CARRY
+
+    #  CLC      ; 1 + 1 = 2, returns V = 0
+    #  LDA #$01
+    #  ADC #$01
+    it 'AC=0x01 IMM=0x01 C=0 -> AC=0x02 V=0', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0x69, 0x01]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x01
+      cycles = cpu.execute()
+      cpu.ac.should.equal 0x02
+      should(cpu.sr & FLAG_OVERFLOW).equal 0
+      should(cpu.sr & FLAG_RESERVED).equal FLAG_RESERVED
+
+    #  CLC      ; 1 + -1 = 0, returns V = 0
+    #  LDA #$01
+    #  ADC #$FF
+    it 'AC=0x01 IMM=0xff C=0 -> AC=0x00 V=0', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0x69, 0xff]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x01
+      cycles = cpu.execute()
+      cpu.ac.should.equal 0x00
+      should(cpu.sr & FLAG_OVERFLOW).equal 0
+      should(cpu.sr & FLAG_RESERVED).equal FLAG_RESERVED
+      should(cpu.sr & FLAG_ZERO).equal FLAG_ZERO
+
+    #  CLC      ; 127 + 1 = 128, returns V = 1
+    #  LDA #$7F
+    #  ADC #$01
+    it 'AC=0x7f IMM=0x01 C=0 -> AC=0x80 V=1', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0x69, 0x01]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x7f
+      cycles = cpu.execute()
+      cpu.ac.should.equal 0x80
+      should(cpu.sr & FLAG_NEGATIVE).equal FLAG_NEGATIVE
+      should(cpu.sr & FLAG_OVERFLOW).equal FLAG_OVERFLOW
+      should(cpu.sr & FLAG_RESERVED).equal FLAG_RESERVED
+
+    #  CLC      ; -128 + -1 = -129, returns V = 1
+    #  LDA #$80
+    #  ADC #$FF
+    it 'AC=0x7f IMM=0x01 C=0 -> AC=0x80 V=1', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0x69, 0x01]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x7f
+      cycles = cpu.execute()
+      cpu.ac.should.equal 0x80
+      should(cpu.sr & FLAG_NEGATIVE).equal FLAG_NEGATIVE
+      should(cpu.sr & FLAG_OVERFLOW).equal FLAG_OVERFLOW
+      should(cpu.sr & FLAG_RESERVED).equal FLAG_RESERVED
+
+    describe 'Decimal Mode', ->
+      it 'should be tested, but it is not', ->
+        true.should.equal true
+
+  describe 'SBC Instruction', ->
+    ###
+      Some test cases in this subsection were written using reference
+      documentation found at: <http://www.6502.org/tutorials/vflag.html>
+    ###
+    it 'AC=0x01 IMM=0x01 C=1 -> AC=0x00 N=0 V=0 Z=1 C=1', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xe9, 0x01]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x01
+      cpu.sr |= FLAG_CARRY
+      cycles = cpu.execute()
+      cpu.ac.should.equal 0x00
+      should(cpu.sr & FLAG_NEGATIVE).equal 0
+      should(cpu.sr & FLAG_OVERFLOW).equal 0
+      should(cpu.sr & FLAG_RESERVED).equal FLAG_RESERVED
+      should(cpu.sr & FLAG_ZERO).equal FLAG_ZERO
+      should(cpu.sr & FLAG_CARRY).equal FLAG_CARRY
+
+    #  SEC      ; 0 - 1 = -1, returns V = 0
+    #  LDA #$00
+    #  SBC #$01
+    it 'AC=0x00 IMM=0x01 C=1 -> AC=0xFF N=1 V=0 Z=0 C=0', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xe9, 0x01]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x00
+      cpu.sr |= FLAG_CARRY
+      cycles = cpu.execute()
+      cpu.ac.should.equal 0xff
+      should(cpu.sr & FLAG_NEGATIVE).equal FLAG_NEGATIVE
+      should(cpu.sr & FLAG_OVERFLOW).equal 0
+      should(cpu.sr & FLAG_RESERVED).equal FLAG_RESERVED
+      should(cpu.sr & FLAG_ZERO).equal 0
+      should(cpu.sr & FLAG_CARRY).equal 0
+
+    #  SEC      ; -128 - 1 = -129, returns V = 1
+    #  LDA #$80
+    #  SBC #$01
+    it 'AC=0x80 IMM=0x01 C=1 -> AC=0x7f N=0 V=1 Z=0 C=1', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xe9, 0x01]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x80
+      cpu.sr |= FLAG_CARRY
+      cycles = cpu.execute()
+      cpu.ac.should.equal 0x7f
+      should(cpu.sr & FLAG_NEGATIVE).equal 0
+      should(cpu.sr & FLAG_OVERFLOW).equal FLAG_OVERFLOW
+      should(cpu.sr & FLAG_RESERVED).equal FLAG_RESERVED
+      should(cpu.sr & FLAG_ZERO).equal 0
+      should(cpu.sr & FLAG_CARRY).equal FLAG_CARRY
+
+    #  SEC      ; 127 - -1 = 128, returns V = 1
+    #  LDA #$7F
+    #  SBC #$FF
+    it 'AC=0x7f IMM=0xff C=1 -> AC=0x80 N=1 V=1 Z=0 C=0', ->
+      memory = new MemoryBuilder()
+        .resetAt 0xc000
+        .put [0xe9, 0xff]
+        .create()
+      mem = createTestMem memory
+      cpu = new Cpu6502 mem
+      cpu.reset()
+      cpu.ac = 0x7f
+      cpu.sr |= FLAG_CARRY
+      cycles = cpu.execute()
+      cpu.ac.should.equal 0x80
+      should(cpu.sr & FLAG_NEGATIVE).equal FLAG_NEGATIVE
+      should(cpu.sr & FLAG_OVERFLOW).equal FLAG_OVERFLOW
+      should(cpu.sr & FLAG_RESERVED).equal FLAG_RESERVED
+      should(cpu.sr & FLAG_ZERO).equal 0
+      should(cpu.sr & FLAG_CARRY).equal 0
+
+    describe 'Decimal Mode', ->
+      it 'should be tested, but it is not', ->
+        true.should.equal true
 
 #----------------------------------------------------------------------------
 # end of opTest.coffee

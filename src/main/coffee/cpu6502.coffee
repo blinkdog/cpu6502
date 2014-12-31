@@ -132,6 +132,13 @@ class Cpu6502
     @pc = ADDR @pc + 0x0001
     @_op[opcode]()
     return CYCLE_TABLE[opcode] + @extraCycle
+    
+  requestIrq: ->
+    return 0 if (@sr & FLAG_INTERRUPT) is FLAG_INTERRUPT
+    @_interrupt IRQ_LO
+  
+  requestNmi: ->
+    @_interrupt NMI_LO
 
   #--------------------------------------------------------------------------
 
@@ -159,7 +166,61 @@ class Cpu6502
 
   #--------------------------------------------------------------------------
 
-  _doADC: => throw new Error 'Not Implemented'
+  _doADC: =>
+    # unsigned int temp = src + AC + (IF_CARRY() ? 1 : 0);
+    temp = @_i + @ac + (@sr & FLAG_CARRY)
+    # SET_ZERO(temp & 0xff);	/* This is not valid in decimal mode */
+    if (DATA temp) is 0
+      @sr |= FLAG_ZERO
+    else
+      @sr &= ~FLAG_ZERO
+      
+    # if (IF_DECIMAL()) {
+    if (@sr & FLAG_DECIMAL) is FLAG_DECIMAL
+
+      # if (((AC & 0xf) + (src & 0xf) + (IF_CARRY() ? 1 : 0)) > 9) temp += 6;
+      if ((@ac & 0x0f) + (@_i & 0x0f) + (@sr & FLAG_CARRY)) > 9
+        temp += 6
+      # SET_SIGN(temp);
+      if (temp & FLAG_NEGATIVE) is FLAG_NEGATIVE
+        @sr |= FLAG_NEGATIVE
+      else
+        @sr &= ~FLAG_NEGATIVE
+      # SET_OVERFLOW(!((AC ^ src) & 0x80) && ((AC ^ temp) & 0x80));
+      if !((@ac ^ @_i) & FLAG_NEGATIVE) && ((@ac ^ temp) & FLAG_NEGATIVE)
+        @sr |= FLAG_OVERFLOW
+      else
+        @sr &= ~FLAG_OVERFLOW
+      # if (temp > 0x99) temp += 96;
+      if temp > 0x99
+        temp += 96
+      # SET_CARRY(temp > 0x99);
+      if (temp > 0x99)
+        @sr |= FLAG_CARRY
+      else
+        @sr &= ~FLAG_CARRY
+
+    # } else {
+    else
+
+      # SET_SIGN(temp);
+      if (temp & FLAG_NEGATIVE) is FLAG_NEGATIVE
+        @sr |= FLAG_NEGATIVE
+      else
+        @sr &= ~FLAG_NEGATIVE
+      # SET_OVERFLOW(!((AC ^ src) & 0x80) && ((AC ^ temp) & 0x80));
+      if !((@ac ^ @_i) & FLAG_NEGATIVE) && ((@ac ^ temp) & FLAG_NEGATIVE)
+        @sr |= FLAG_OVERFLOW
+      else
+        @sr &= ~FLAG_OVERFLOW
+      # SET_CARRY(temp > 0xff)
+      if (temp > 0xff)
+        @sr |= FLAG_CARRY
+      else
+        @sr &= ~FLAG_CARRY
+
+    #AC = ((BYTE) temp);
+    @ac = DATA temp
 
   _doAND: =>
     @_i &= @ac
@@ -211,8 +272,7 @@ class Cpu6502
     @pc = ADDR @pc + 0x0001
     @_push HI(@pc), RETURN_ADDRESS_HI
     @_push LO(@pc), RETURN_ADDRESS_LO
-    @sr |= FLAG_BREAK
-    @_push @sr, STATUS_REGISTER
+    @_push (@sr | FLAG_BREAK), STATUS_REGISTER
     @sr |= FLAG_INTERRUPT
     @pc = @mem.read(IRQ_LO, VECTOR_LO)
     @pc |= @mem.read(IRQ_HI, VECTOR_HI) << 8
@@ -324,7 +384,9 @@ class Cpu6502
 
   _doPLP: =>
     @_i = @_pop STATUS_REGISTER
-    @sr = @_i | FLAG_RESERVED
+    @sr = @_i
+    @sr |= FLAG_RESERVED
+    @sr &= ~FLAG_BREAK
 
   _doROL: =>
     @_i = @_i << 1
@@ -356,7 +418,46 @@ class Cpu6502
     @pc |= (@_pop(RETURN_ADDRESS_HI) << 8)
     @pc = ADDR @pc + 0x0001
 
-  _doSBC: => throw new Error 'Not Implemented'
+#  _doSBC: =>
+#    console.log "AC:#{@ac} IMM:#{@_i} C:#{@sr & FLAG_CARRY}"
+#    # unsigned int temp = AC - src - (IF_CARRY() ? 0 : 1);
+#    temp = @ac - @_i - ((@sr ^ FLAG_CARRY) & FLAG_CARRY)
+#    console.log "temp:#{temp}"
+#    # SET_SIGN(temp);
+#    if (temp & FLAG_NEGATIVE) is FLAG_NEGATIVE
+#      @sr |= FLAG_NEGATIVE
+#    else
+#      @sr &= ~FLAG_NEGATIVE
+#    # SET_ZERO(temp & 0xff);	/* Sign and Zero are invalid in decimal mode */
+#    if (DATA temp) is 0
+#      @sr |= FLAG_ZERO
+#    else
+#      @sr &= ~FLAG_ZERO
+#    # SET_OVERFLOW(((AC ^ temp) & 0x80) && ((AC ^ src) & 0x80));
+#    if ((@ac ^ temp) & FLAG_NEGATIVE) && ((@ac ^ @_i) & FLAG_NEGATIVE)
+#      @sr |= FLAG_OVERFLOW
+#    else
+#      @sr &= ~FLAG_OVERFLOW
+#    # if (IF_DECIMAL()) {
+#    if (@sr & FLAG_DECIMAL) is FLAG_DECIMAL
+#      # if ( ((AC & 0xf) - (IF_CARRY() ? 0 : 1)) < (src & 0xf)) /* EP */ temp -= 6;
+#      if ((@ac & 0x0f) - ((@sr ^ FLAG_CARRY) & FLAG_CARRY)) < (@_i & 0x0f)
+#        temp -= 6
+#      # if (temp > 0x99) temp -= 0x60;
+#      if temp > 0x99
+#        temp -= 0x60
+#    # }
+#    # SET_CARRY(temp < 0x100);
+#    if temp < 0x100
+#      @sr |= FLAG_CARRY
+#    else
+#      @sr &= ~FLAG_CARRY
+#    # AC = (temp & 0xff);
+#    @ac = DATA temp
+
+  _doSBC: =>
+    @_i ^= 0xff   # twos-compliment of the supplied value
+    @_doADC()     # add it instead of subtracting it
 
   _doSEC: =>
     @sr |= FLAG_CARRY
@@ -403,6 +504,17 @@ class Cpu6502
     @_i = @yr
     @_updateNZ()
     @ac = @_i
+
+  #--------------------------------------------------------------------------
+
+  _interrupt: (vector) =>
+    @_push HI(@pc), RETURN_ADDRESS_HI
+    @_push LO(@pc), RETURN_ADDRESS_LO
+    @_push (@sr & ~FLAG_BREAK), STATUS_REGISTER
+    @sr |= FLAG_INTERRUPT
+    @pc = @mem.read(vector, VECTOR_LO)
+    @pc |= @mem.read(ADDR(vector + 0x0001), VECTOR_HI) << 8
+    return 7
 
   #--------------------------------------------------------------------------
   

@@ -15,8 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #----------------------------------------------------------------------------
 
-exports.Cpu6502 = require './cpu6502'
-exports.MemoryBuilder = require './memory'
+exports.Cpu6502 = require('./cpu6502').Cpu6502
+exports.MemoryBuilder = require('./memory').MemoryBuilder
 
 #----------------------------------------------------------------------------
 # end of cpu.coffee
